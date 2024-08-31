@@ -81,23 +81,37 @@ fn main() -> ! {
 
     rprintln!("Initialising UART...");
     let uart = &peripherals.UARTE0;
+
+    // Enable UARTE peripheral
     uart.enable.write(|w| {
         w.enable()
             .variant(hal::pac::uarte0::enable::ENABLE_A::ENABLED)
     });
+
+    // Select RX pin
     uart.psel.rxd.write(|w| {
         w.pin()
             .variant(3)
             .connect()
             .variant(hal::pac::uarte0::psel::rxd::CONNECT_A::CONNECTED)
     });
+
+    // Set baud rate
     uart.baudrate.write(|w| w.baudrate().baud9600());
+
+    // Enable interrupt for RXSTARTED, ERROR and ENDRX events
     uart.intenset
         .write(|w| w.rxstarted().set_bit().error().set_bit().endrx().set_bit());
+
+    // Enable UARTE interrupt in NVIC
     unsafe { hal::pac::NVIC::unmask(hal::pac::Interrupt::UARTE0_UART0) };
 
+    // Enable ENDRX -> STARTRX shortcut
     uart.shorts.write(|w| w.endrx_startrx().set_bit());
+
     update_rxd_ptr(uart);
+
+    // Set character count which will trigger ENDRX
     uart.rxd.maxcnt.write(|w| w.maxcnt().variant(5));
 
     rprintln!("Starting UART");
