@@ -135,10 +135,8 @@ fn main() -> ! {
 fn update_rxd_ptr(uart: &UARTE0) {
     critical_section::with(|cs| {
         let write_offset = WRITE.borrow(cs).get();
-        uart.rxd.ptr.write(|w| {
-            w.ptr()
-                .variant(unsafe { RXD.as_ptr().offset(write_offset) } as u32)
-        });
+        let next_rxd_address = unsafe { RXD.as_ptr().offset(write_offset) } as u32;
+        uart.rxd.ptr.write(|w| w.ptr().variant(next_rxd_address));
         WRITE.borrow(cs).set((write_offset + 1) % 10);
     });
 }
