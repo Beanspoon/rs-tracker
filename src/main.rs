@@ -41,19 +41,23 @@ static P: Mutex<Cell<Option<Peripherals>>> = Mutex::new(Cell::new(None));
 fn UARTE0_UART0() {
     critical_section::with(|cs| {
         if let Some(peripherals) = P.borrow(cs).take() {
+            // RXSTARTED event
             if peripherals.UARTE0.events_rxstarted.read().bits() == 1 {
-                // RXSTARTED event
                 update_rxd_ptr(&peripherals.UARTE0);
                 peripherals.UARTE0.events_rxstarted.reset();
-            } else if peripherals.UARTE0.events_error.read().bits() == 1 {
-                // ERROR event
+            }
+
+            // ERROR event
+            if peripherals.UARTE0.events_error.read().bits() == 1 {
                 peripherals
                     .UARTE0
                     .tasks_flushrx
                     .write(|w| unsafe { w.bits(1) });
                 peripherals.UARTE0.events_error.reset();
-            } else if peripherals.UARTE0.events_endrx.read().bits() == 1 {
-                // ENDRX event
+            }
+
+            // ENDRX event
+            if peripherals.UARTE0.events_endrx.read().bits() == 1 {
                 critical_section::with(|cs| {
                     let index = READ.borrow(cs).get();
                     let data = unsafe { RXD[index] };
