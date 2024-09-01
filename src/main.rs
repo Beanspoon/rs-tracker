@@ -1,6 +1,8 @@
 #![no_std]
 #![no_main]
 
+mod nmea_parser;
+
 use core::cell::Cell;
 
 use cortex_m_rt::entry;
